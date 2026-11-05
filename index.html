@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oceanian Party Atlas</title>
+<meta name="description" content="Interactive explorer for the Oceania Elects party database.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Advent+Pro:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="title-row">
+      <div>
+        <h1>Oceanian Party Atlas</h1>
+        <p class="sub"><span id="data-stamp">loading…</span></p>
+      </div>
+    </div>
+    <div class="filters" role="search">
+      <input id="q" type="search" placeholder="Search name, abbreviation, national ID…" aria-label="Search parties">
+      <select id="f-country" aria-label="Country"><option value="">All countries</option></select>
+      <select id="f-status" aria-label="Status"></select>
+      <select id="f-ep" aria-label="International federation"><option value="">All international federations</option></select>
+      <select id="f-region" aria-label="Region"><option value="">All regions</option></select>
+      <select id="f-ideo" aria-label="Ideology"><option value="">All ideologies</option></select>
+      <label class="chk"><input id="f-latest" type="checkbox" checked> latest version only</label>
+      <button id="reset" class="ghost">Reset</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="kpis" id="kpis"></section>
+
+  <section class="grid">
+    <article class="card span-2">
+      <header><h2>Where the parties are</h2><p>Entities per country. Click a country to filter everything.</p></header>
+      <div id="map" class="map"></div>
+      <div id="map-legend" class="legend-ramp"></div>
+    </article>
+
+    <article class="card">
+      <header><h2>International party federations</h2><p>Current members. Click to filter.</p></header>
+      <div id="ep-total"></div>
+    </article>
+
+    <article class="card span-3">
+      <header><h2>Ideology by region</h2><p>Each dot is a party: left–right by ideological orientation, one row per region of Oceania. Colour = international party federation. Pick a country above to see one party system. Hover for details, click to open.</p></header>
+      <div id="lr-legend" class="legend lr-legend"></div>
+      <div id="lr"></div>
+      <p id="lr-note" class="note"></p>
+    </article>
+
+
+
+
+
+    <article class="card span-3">
+      <header><h2>All entities</h2><p id="tbl-count"></p></header>
+      <div class="tbl-wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+      <button id="more" class="ghost more">Show more</button>
+    </article>
+
+    <article class="card span-3">
+      <header><h2>Ideology legend</h2><p id="lg-note"></p></header>
+      <div id="legend-ideo" class="lg-grid"></div>
+      <p id="lg-undef" class="note"></p>
+      <button id="lg-toggle" class="ghost more" aria-expanded="false"></button>
+    </article>
+  </section>
+  <section class="credits" aria-labelledby="credits-h">
+    <h2 id="credits-h">About this database</h2>
+    <p>The Oceanian parties are part of the Europe Elects Party &amp; Alliance Database, published by <a href="https://oceaniaelects.com/">Oceania Elects</a>.</p>
+    <p class="contact">Found a mistake, or would you like to add data? <a href="mailto:contact@oceaniaelects.com">contact@oceaniaelects.com</a></p>
+    <p class="fine">Data © Europe Elects / Oceania Elects · updated daily.</p>
+  </section>
+</main>
+
+<aside id="drawer" class="drawer" aria-hidden="true">
+  <button class="ghost close" id="drawer-close" aria-label="Close">✕</button>
+  <div id="drawer-body"></div>
+</aside>
+<div id="tip" class="tip" role="tooltip"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+Upload the contents of this folder to the root of Europe-Elects/oceanian-party-atlas.
+
+Before the first run:
+- Add the GitHub Actions repository secret PARTY_DB_SHEET_ID.
+- Set GitHub Pages source to GitHub Actions.
+- Ensure the Google Workload Identity Federation provider permits this repository.
+- Ensure the ee-sheets-reader service account has read access to the party spreadsheet.
+
+The workflow expects the source tab to have GID 0, matching the original workflow.
