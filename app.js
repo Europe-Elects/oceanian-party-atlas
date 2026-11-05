@@ -230,8 +230,18 @@ async function renderMap() {
   const isoOf = f => iso2ByNum[f.id] || iso2ByName[f.properties.name] || iso2ByCountry[String(f.properties.name).toLowerCase()] || null;
 
   const W = el.clientWidth || 800, H = el.clientHeight || 600;
-  const proj = d3.geoMercator().center([160, -5]);
-  proj.fitExtent([[4, 4], [W - 4, H - 4]], { type: "MultiPoint", coordinates: [[105, -48], [-110, 28]] });
+
+  // FIX: Rotate projection by -160 to center the Pacific/Antimeridian horizontally.
+  // Coordinates in fitExtent are rotated relative to 160°E (-55° longitude = 105°E, +50° longitude = 130°W/-130°E).
+  const proj = d3.geoMercator()
+    .rotate([-160, 0])
+    .center([0, -10]);
+
+  proj.fitExtent([[4, 4], [W - 4, H - 4]], {
+    type: "MultiPoint",
+    coordinates: [[-55, -48], [50, 25]]
+  });
+
   const path = d3.geoPath(proj);
   const max = d3.max(cnt.values()) || 1;
   // Colour follows the selected federation or ideology (same colours as elsewhere); red otherwise.
@@ -308,8 +318,8 @@ function renderEPTotal() {
     .attr("width", d => d.lean ? Math.max(2, x(d.lean) - 2) : 0).attr("fill", d => hatchOf(d.key));
   g.append("text").attr("class", "val").attr("x", d => lw + x(d.firm + d.lean) + 6).attr("y", row / 2).attr("dy", ".35em").text(d => fmt(d.firm + d.lean));
   g.on("mousemove", (ev, d) => showTip(ev, `<b>${esc(d.key)}</b><br>${fmt(d.firm)} member parties<br><span class="m">Click to filter</span>`))
-   .on("mouseleave", hideTip)
-   .on("click", (ev, d) => { state.ep = state.ep === d.key ? "" : d.key; $("#f-ep").value = state.ep; apply(); });
+    .on("mouseleave", hideTip)
+    .on("click", (ev, d) => { state.ep = state.ep === d.key ? "" : d.key; $("#f-ep").value = state.ep; apply(); });
 }
 
 // ---------- left–right spectrum ----------
@@ -449,280 +459,7 @@ const IDEOLOGY_DEFS = [
  [
   "Christian fundamentalism",
   "#a16585",
-  "Christian fundamentalist parties are political movements whose primary political concern is the preservation of religiously informed public ethics and socially conservative understandings of family and community. They tend to advocate policies rooted in Christian or religious values, often viewing the Christian Bible as a foundational guide for policymaking, alongside support for traditional family structures, cultural continuity, and a cautious approach to rapid social change, frequently opposing the liberalization of issues such as abortion, euthanasia, or changes to marriage and gender norms. They distinguish themselves from national-conservative parties by placing greater emphasis on religious doctrine and biblical morality rather than national identity, sovereignty, or cultural nationalism, while distinguishing themselves from broader centre-right parties by giving moral and religious values precedence over economic liberalism, pragmatic governance, or broad ideological coalitions. They further distinguish themselves from centre-left parties by promoting a vision of social justice rooted more in charity, community responsibility, and faith-based solidarity than in redistribution, labour politics, or class-based bargaining."
- ],
- [
-  "Eurofederalism",
-  "#502379",
-  "European federalist parties are political movements whose primary political concern is the deepening of European integration and the strengthening of supranational democratic governance across Europe. They tend to advocate a more politically integrated or federal European Union, stronger common institutions, transnational democracy, coordinated responses to challenges such as climate change and migration, and policies that transcend traditional national politics. They distinguish themselves from mainstream centrist and pro-European parties by placing European integration itself at the centre of their political agenda, often advocating far-reaching institutional reform or federalism, while distinguishing themselves from Eurosceptic and nationalist parties by viewing shared sovereignty, cross-border cooperation, and a stronger European political identity as solutions rather than threats to democracy and prosperity."
- ],
- [
-  "Far-left",
-  "#7c0000",
-  "Far-left parties are political movements whose primary political concern is the transformation or replacement of capitalist economic systems in favour of socialism, communism, or other forms of collective economic organization. They tend to advocate strong public or collective ownership of key industries, extensive workers’ rights, economic planning, anti-imperialism, and a rapid or far-reaching restructuring of capitalist economies, often viewing liberal capitalism as inherently exploitative and class-based inequality as a central political problem. They distinguish themselves from broader left-wing parties by rejecting the institutions of liberal democratic capitalism as insufficient for achieving social and economic equality, often favouring revolutionary change, workers’ democracy, or alternative political models over parliamentary democracy within the capitalist system."
- ],
- [
-  "Far-right",
-  "#70463A",
-  "Far-right parties are political movements whose primary political concern is the protection of national identity, cultural homogeneity, sovereignty, and traditional social order, often framed as a response to perceived threats from immigration, multiculturalism, globalization, or supranational institutions. They tend to advocate restrictive immigration policies, strong law-and-order approaches, national preference in welfare and economics, social conservatism, and skepticism or rejection of international organizations, while emphasizing cultural traditionalism and national sovereignty over liberal democratic constraints and, in some cases, questioning multiparty parliamentarism in favour of stronger majoritarian, leader-centred, or ethnically defined conceptions of political representation. They distinguish themselves from mainstream right-wing and national-conservative parties by embracing more exclusionary or ethnonationalist conceptions of national identity and by displaying greater skepticism toward multiparty parliamentary democracy itself, often favouring stronger executive authority, plebiscitary leadership, or political systems that subordinate pluralism to a unified conception of the nation."
- ],
- [
-  "Green politics",
-  "#009900",
-  "Green parties are political movements whose primary political concern is environmental sustainability, climate protection, and the ecological transformation of society and the economy, typically paired with social progressivism and centre-left economic politics. They tend to advocate ambitious climate action, renewable energy, biodiversity protection, sustainable economic development, social justice, and participatory democracy, often linking environmental concerns with progressive positions on human rights, equality, and international cooperation. They distinguish themselves from centre-left and social democratic parties by placing ecological sustainability and long-term environmental limits at the centre of policymaking rather than treating them as one priority among many, while distinguishing themselves from animal rights parties by focusing more broadly on systemic environmental transformation, climate policy, and sustainability rather than primarily on animal welfare or animal rights."
- ],
- [
-  "Islamism",
-  "#8A9099",
-  "Islamist parties are political movements whose primary political concern is the promotion of law and social order informed by Islamic values and religious principles. They tend to advocate socially conservative policies, stronger roles for religion in public life, support for heteronormative family structures, and, in some cases, the greater incorporation of Islamic legal or moral frameworks into governance, often pairing this with economic conservatism or welfare-oriented communitarianism. They distinguish themselves from mainstream conservative and centre-right parties by placing religious doctrine and faith-based morality at the centre of policymaking, while distinguishing themselves from secular nationalist or right-wing parties by prioritizing religious identity and moral order over ethnic nationalism or purely state-centred conceptions of national identity."
- ],
- [
-  "Left-wing",
-  "#990000",
-  "Left-wing and democratic socialist parties are political movements whose primary political concern is the overcoming or fundamental transformation of capitalism through liberal-democratic and parliamentary means in pursuit of greater social and economic equality. They tend to advocate progressive taxation, welfare expansion, workers’ rights, environmental sustainability, anti-discrimination policies, democratic control over economic decision-making, and stronger public intervention in the economy, often combining social progressivism with critiques of inequality and corporate power. They distinguish themselves from centre-left and social democratic parties by viewing capitalism as a system that should ultimately be transcended rather than merely regulated or reformed, while distinguishing themselves from communist and anti-capitalist parties by accepting pluralist liberal democracy and seeking systemic change through electoral, parliamentary, and democratic institutions rather than rejecting the liberal democratic state or embracing revolutionary politics."
- ],
- [
-  "Liberalism",
-  "#FFD700",
-  "Liberal parties are political movements whose primary political concern is the protection of individual liberty, political pluralism, and constitutional democracy within a capitalist economic framework. They tend to advocate civil liberties, rule of law, market-oriented economies, international cooperation, European integration, and institutional reform, often combining economic liberalism with socially progressive or moderate positions on cultural issues and a broad skepticism toward state intervention in both the economy and individuals’ private lives. They distinguish themselves from centre-right and conservative parties by placing greater emphasis on individual freedoms, social liberalism, institutional reform, and internationalism over tradition, authority, or social conservatism, while distinguishing themselves from centre-left and social democratic parties by placing greater trust in markets, entrepreneurship, fiscal moderation, and individual choice, alongside a broader rejection of state interventionism in the economy and social private life."
- ],
- [
-  "Libertarianism",
-  "#F2C300",
-  "Libertarian and classical liberal parties are political movements whose primary political concern is the maximization of individual liberty through a broad rejection of state interventionism in both the economy and private life. They tend to advocate a minimal state primarily limited to upholding laws, policing, national defence, secure borders, and the protection of property rights and free markets, while favouring privatization or market provision of services such as healthcare, education, and welfare. They generally support low taxation, deregulation, strong civil liberties, individual responsibility, and extensive personal freedoms, often combining economically laissez-faire policies with socially liberal or anti-authoritarian positions. They distinguish themselves from mainstream liberal and centre-right parties by advocating a far smaller role for the state and stronger free-market economics, while distinguishing themselves from conservative parties by typically rejecting moral paternalism and state involvement in regulating private or social behaviour."
- ],
- [
-  "Monarchism",
-  "#8A9099",
-  "Monarchist and royalist parties are political movements whose primary political concern is the preservation or restoration of monarchy as a source of national unity, historical continuity, and political legitimacy. They tend to advocate traditional values, patriotism, institutional continuity, and stronger national identity, often viewing constitutional or symbolic monarchy as a stabilizing force above partisan politics. They distinguish themselves from mainstream conservative and centre-right parties by placing the monarchy or dynastic legitimacy at the centre of their political identity and constitutional vision, while distinguishing themselves from far-right parties by typically emphasizing historical continuity and constitutional order over ethnonationalism."
- ],
- [
-  "National-conservatism",
-  "#0000FF",
-  "National-conservative parties are political movements whose primary political concern is the protection of national sovereignty, cultural continuity, social order, and traditional values within the framework of representative democracy. They tend to advocate stronger borders, law and order, national identity, social conservatism, market-oriented or mixed economies, and skepticism toward supranational governance, often emphasizing patriotism, gradual change, and institutional stability, while many national-conservative parties combine this with Atlanticism, support for NATO, and strong transatlantic partnerships. They distinguish themselves from centre-right and liberal parties by placing greater emphasis on national identity, cultural conservatism, sovereignty, and skepticism toward immigration or supranational institutions, while distinguishing themselves from far-right parties by generally accepting pluralist liberal democracy, multiparty parliamentarism, constitutional constraints, and transatlantic cooperation rather than embracing anti-system politics, ethnonationalism, or hostility toward Western alliances."
- ],
- [
-  "Pirate politics",
-  "#9c36b8",
-  "Pirate parties are political movements whose primary political concern is the protection of digital rights, civil liberties, transparency, and participatory democracy in the information age. They tend to advocate internet freedom, data privacy, government transparency, open-source technologies, copyright reform, democratic innovation, and strong protections against state or corporate surveillance, often pairing these positions with socially liberal and pro-democratic values. They distinguish themselves from liberal and centrist parties by placing digital rights, democratic participation, and transparency at the centre of policymaking rather than treating them as secondary issues, while distinguishing themselves from broader progressive or left-wing parties by focusing less on traditional economic redistribution and more on civil liberties, decentralization, technological openness, and democratic reform."
- ],
- [
-  "Right-wing",
-  "#000000",
-  "Right-wing parties are political movements whose primary political concern is the protection of national sovereignty, traditional social order, and the perceived interests of “ordinary people” against political elites, globalization, immigration, or supranational institutions. They tend to advocate restrictive immigration policies, stronger borders, law and order, welfare chauvinism or economic protectionism, skepticism toward supranational governance, and culturally conservative positions, often combining nationalism with anti-establishment or populist rhetoric and a more skeptical stance toward transatlantic institutions or alliances. They distinguish themselves from national-conservative parties by placing greater emphasis on populist anti-elite politics, political personalization, and skepticism toward transatlanticism or Western institutional alignment, while distinguishing themselves from far-right parties by generally avoiding explicit ethnonationalism and accepting multiparty parliamentary democracy, even if they challenge liberal norms, minority protections, or judicial constraints."
+  "Christian fundamentalist parties are political movements whose primary political concern is the preservation of religiously informed public ethics and socially conservative understandings of family and community. They tend to advocate policies rooted in Christian or religious values, o"
  ]
 ];
-// ---------- ideology legend ----------
-let legendAll = false;
-const ideoKey = v => String(v || "").toLowerCase().replace(/-/g, " ").replace(/^libertarian$/, "libertarianism").trim();
-function renderLegend() {
-  const ideosOf = r => String(r[C.ideo] || "").split(/[,;]/).map(ideoKey).filter(Boolean);
-  const count = n => VIEW.filter(r => ideosOf(r).includes(ideoKey(n))).length;
-  const items = IDEOLOGY_DEFS.map(([n, c, t]) => ({ n, c, t, k: count(n) }));
-  const present = items.filter(i => i.k > 0), shown = legendAll ? items : present;
-  const known = new Set(IDEOLOGY_DEFS.map(([n]) => ideoKey(n))), undef = {};
-  VIEW.forEach(r => String(r[C.ideo] || "").split(/[,;]/).map(x => x.trim()).filter(Boolean).forEach(x => { if (!known.has(ideoKey(x))) undef[x] = (undef[x] || 0) + 1; }));
-  const undefTxt = Object.entries(undef).sort((a, b) => b[1] - a[1]).map(([n, k]) => `${esc(n)} (${fmt(k)})`).join(", ");
-  $("#lg-note").textContent = legendAll ? "All ideologies · counts are for the parties in view" : "Ideologies of the parties in view";
-  $("#legend-ideo").innerHTML = shown.map(({ n, c, t, k }) => `<div class="lg" style="background:${c}12">
-      <div class="t"><span class="dot" style="background:${c}"></span><h3>${esc(n)}</h3>${k ? `<span class="count">${fmt(k)} ${k === 1 ? "party" : "parties"}</span>` : ""}</div>
-      <p>${esc(t)}</p></div>`).join("") || '<p class="note">No parties in view.</p>';
-  $("#lg-undef").textContent = undefTxt ? `Also used, without a definition: ${undefTxt.replace(/&amp;/g, "&")}.` : "";
-  const hidden = items.length - present.length, btn = $("#lg-toggle");
-  btn.style.display = hidden || legendAll ? "block" : "none";
-  btn.textContent = legendAll ? "Show only ideologies in view" : `Show all ${items.length} ideologies`;
-  btn.setAttribute("aria-expanded", legendAll);
-  btn.onclick = () => { legendAll = !legendAll; renderLegend(); postHeight(); };
-}
-
-// ---------- table ----------
-const COLS = [
-  ["country", "Country", r => r[C.country]],
-  ["abbr", "Abbr.", r => r[C.abbr]],
-  ["name", "Party", r => r[C.name]],
-  ["ideo", "Ideology", r => r[C.ideo]],
-  ["region", "Region", r => r._region],
-  ["ep", "International federation", r => r._ep],
-  ["year", "Since", r => r._year ?? ""],
-  ["status", "Status", r => r._status],
-];
-function renderTable() {
-  const get = COLS.find(c => c[0] === sort.key)[2];
-  const rows = VIEW.slice().sort((a, b) => { const r = d3.ascending(get(a) || "￿", get(b) || "￿"); return sort.asc ? r : -r; });
-  $("#tbl thead").innerHTML = "<tr>" + COLS.map(([k, l]) => `<th data-k="${k}" class="${sort.key === k ? "sorted" + (sort.asc ? " asc" : "") : ""}">${l}</th>`).join("") + "</tr>";
-  $("#tbl thead").querySelectorAll("th").forEach(th => th.onclick = () => { const k = th.dataset.k; sort = { key: k, asc: sort.key === k ? !sort.asc : true }; renderTable(); });
-  $("#tbl tbody").innerHTML = rows.slice(0, shown).map((r, i) => `<tr data-i="${ALL.indexOf(r)}">
-    <td>${esc(r[C.country])}</td><td><b>${esc(r[C.abbr])}</b></td>
-    <td>${esc(r[C.name])}<br><span class="native">${esc(trunc(r[C.native] || "", 48))}</span></td>
-    <td>${esc(r[C.ideo])}</td><td>${esc(r._region)}</td>
-    <td>${r._ep ? `<span class="pill"><i style="background:${colorOf(r._ep)}"></i>${esc(r._ep)}</span>` : ""}</td>
-    <td class="num">${r._year ?? ""}</td><td><span class="status">${esc(r._status)}</span></td></tr>`).join("");
-  $("#tbl tbody").querySelectorAll("tr").forEach(tr => tr.onclick = () => openDrawer(ALL[+tr.dataset.i]));
-  $("#tbl-count").textContent = `${fmt(rows.length)} rows · showing ${fmt(Math.min(shown, rows.length))}. Click a row for full details.`;
-  $("#more").style.display = rows.length > shown ? "block" : "none";
-}
-
-// ---------- drawer ----------
-function openDrawer(r) {
-  const val = v => (v ? esc(v) : '<span style="color:var(--muted)">—</span>');
-  $("#drawer-body").innerHTML = `
-    <h3>${esc(r[C.name])} ${r[C.abbr] ? `<span style="color:var(--muted);font-weight:400">(${esc(r[C.abbr])})</span>` : ""}</h3>
-    <div class="logo-box" id="drawer-logo" hidden></div>
-    <div class="native">${esc(r[C.native])} · ${esc(r[C.country])}</div>
-    ${SECTIONS.map(([t, ks]) => {
-      // "Unaffiliated" is shown as its own category, so a start date (e.g. "EP Group Start 2018") always has a group next to it.
-      // Affiliation sections list fields in threes: group/affiliation, start, end.
-      const unaff = v => /^unaffiliated$/i.test(String(v || "").trim());
-      const has = k => r[k] && (!isNone(r[k]) || unaff(r[k]));
-      let items, show = k => r[k];
-      if (t === "Identity" || t === "Profile" || t === "Dates") items = t === "Dates" ? ks.filter(has) : ks;
-      else {
-        items = []; const filled = new Set();
-        for (let i = 0; i < ks.length; i += 3) {
-          const trio = ks.slice(i, i + 3);
-          if (!trio.some(has)) continue;
-          items.push(...trio.filter((k, j) => j === 0 || has(k)));
-          if (!has(trio[0]) || unaff(r[trio[0]])) filled.add(trio[0]);
-        }
-        show = k => filled.has(k) ? "Unaffiliated" : r[k];
-      }
-      if (!items.length) return "";
-      return `<h4>${t}</h4><dl>${items.map(k => `<dt>${esc(k)}</dt><dd>${val(show(k))}</dd>`).join("")}</dl>`;
-    }).join("")}`;
-  $("#drawer").classList.add("open"); $("#drawer").setAttribute("aria-hidden", "false");
-  placeDrawer(); postHeight();
-  const token = (openDrawer.token = (openDrawer.token || 0) + 1);
-  findLogo(r).then(src => {
-    const box = $("#drawer-logo");
-    if (!src || !box || openDrawer.token !== token) return;
-    box.innerHTML = `<img src="${esc(src)}" alt="Logo of ${esc(r[C.name])}" onerror="this.parentNode.hidden=true">`;
-    box.hidden = false; postHeight();
-  });
-}
-
-// ---------- party logos (same rules as the country pages) ----------
-// 1. A "Logo" column in the database (a Wikipedia/Commons file link, an image URL, a Wikidata Q-ID, or "none").
-// 2. Otherwise the party's English Wikipedia article (English, then native name) → Wikidata logo (P154),
-//    accepted only if Wikidata says it is a political party in that country.
-const LOGO_CACHE = new Map();
-const wikiJSON = url => fetch(url).then(res => { if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); });
-const claims = (e, p) => (((e && e.claims) || {})[p] || []).filter(c => c.rank !== "deprecated").map(c => c.mainsnak && c.mainsnak.datavalue && c.mainsnak.datavalue.value).filter(Boolean);
-const filePath = (host, file) => `https://${host}/wiki/Special:FilePath/${encodeURIComponent(String(file).replace(/ /g, "_"))}?width=360`;
-function logoSpec(v) {
-  v = clean(v);
-  if (!v) return null;
-  if (/^(none|no|-|–|hide|hidden)$/i.test(v)) return { hide: true };
-  if (/^Q\d+$/i.test(v)) return { qid: v.toUpperCase() };
-  const wiki = v.match(/^https?:\/\/([\w.-]+\.(?:wikipedia|wikimedia)\.org)\/wiki\/(?:[^#]*#\/media\/)?[^:/#]+:([^?#]+\.(?:svg|png|jpe?g|gif|webp|tiff?))(?:[?#].*)?$/i);
-  if (wiki) return { src: filePath(wiki[1].replace(".m.", "."), decodeURIComponent(wiki[2])) };
-  const bare = v.match(/^(?:File:)?(.+\.(?:svg|png|jpe?g|gif|webp))$/i);
-  if (bare && !/^https?:/i.test(v)) return { src: filePath("commons.wikimedia.org", bare[1]) };
-  if (/^https?:\/\//i.test(v)) return { src: v };
-  return null;
-}
-async function titleToQid(title) {
-  const j = await wikiJSON("https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageprops&ppprop=wikibase_item|disambiguation&titles=" + encodeURIComponent(title));
-  const pg = Object.values((j.query || {}).pages || {})[0] || {}, pp = pg.pageprops || {};
-  return pp.wikibase_item && !("disambiguation" in pp) ? pp.wikibase_item : null;
-}
-async function entities(qids) {
-  const j = await wikiJSON("https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&origin=*&props=claims&ids=" + qids.join("|"));
-  return j.entities || {};
-}
-function findLogo(r) {
-  const key = r[C.verId] || r[C.id] || r[C.name];
-  if (!LOGO_CACHE.has(key)) LOGO_CACHE.set(key, (async () => {
-    const sp = logoSpec(r.Logo || r["Logo URL"] || r["Logo Override"]);
-    if (sp && sp.hide) return null;
-    if (sp && sp.src) return sp.src;
-    try {
-      const forced = (sp && sp.qid) || (clean(r["Wikidata ID"]).match(/Q\d+/) || [""])[0];
-      const [qCountry, qEn, qNat] = await Promise.all([r[C.country], r[C.name], r[C.native]].map(t => (t ? titleToQid(t).catch(() => null) : null)));
-      const qids = [...new Set([forced, qEn, qNat].filter(Boolean))];
-      if (!qids.length) return null;
-      const ents = await entities(qids);
-      for (const q of qids) {
-        const e = ents[q]; if (!e) continue;
-        if (q !== forced) {
-          const inCountry = qCountry && claims(e, "P17").some(v => v.id === qCountry);
-          const isParty = claims(e, "P31").some(v => v.id === "Q7278") || claims(e, "P1142").length > 0;
-          if (!inCountry || !isParty) continue;
-        }
-        const file = claims(e, "P154")[0] || claims(e, "P8972")[0];
-        if (file) return filePath("commons.wikimedia.org", file);
-      }
-    } catch (e) { /* no logo */ }
-    return null;
-  })());
-  return LOGO_CACHE.get(key);
-}
-const closeDrawer = () => { $("#drawer").classList.remove("open"); $("#drawer").setAttribute("aria-hidden", "true"); postHeight(); };
-
-// ---------- embedding (WordPress iframe) ----------
-// Inside an iframe the page has no scrollbar of its own: it reports its height to the parent page (same message
-// as the other Europe Elects embeds), and the detail panel opens next to where the reader clicked.
-const EMBEDDED = window.self !== window.top;
-if (EMBEDDED) document.documentElement.classList.add("embedded");
-let lastY = 0;
-addEventListener("pointerdown", e => { lastY = e.pageY; }, true);
-function postHeight() {
-  if (!EMBEDDED) return;
-  const d = $("#drawer"), drawerBottom = d.classList.contains("open") ? d.offsetTop + d.offsetHeight + 16 : 0;
-  const h = Math.max(document.body.scrollHeight, drawerBottom);
-  parent.postMessage({ "datawrapper-height": { "ae-atlas": h } }, "*");
-}
-function placeDrawer() {
-  if (!EMBEDDED) return;
-  const d = $("#drawer");
-  d.style.top = Math.max(0, Math.min(lastY - 120, document.body.scrollHeight - d.offsetHeight)) + "px";
-}
-
-function renderAll() { renderKPIs(); renderMap(); renderEPTotal(); renderSpectrum(); renderTable(); renderLegend(); setTimeout(postHeight, 50); }
-
-// ---------- boot ----------
-async function boot() {
-  let data;
-  try { data = await load(); } catch (e) { $("#data-stamp").textContent = "could not load data"; return; }
-  // Latest version of each entity = highest Europe Elects Entity Version per Entity ID (filter "latest version only").
-  const rows = data.rows.map(normalise), maxVer = new Map();
-  rows.forEach(r => { const id = r[C.id] || r[C.name]; maxVer.set(id, Math.max(maxVer.get(id) || 0, r._ver)); });
-  rows.forEach(r => { r._latest = r._ver === maxVer.get(r[C.id] || r[C.name]); });
-  ALL = rows;
-  const fromSample = data.url.includes("sample");
-  $("#data-stamp").textContent = `${fmt(ALL.filter(r => r._latest).length)} parties${fromSample ? " (sample data)" : ""}${data.stamp ? " · updated " + new Date(data.stamp).toLocaleDateString() : ""}`;
-
-  const countries = [...d3.rollup(ALL, v => v[0][C.country], r => r[C.iso])].filter(([k]) => k).sort((a, b) => String(a[1]).localeCompare(String(b[1]), "en", { sensitivity: "base" })); // "Åland" sorts as "Aland"
-  fillSelect($("#f-country"), countries.map(([iso, n]) => [iso, n]), "All countries");
-  // "realigned" rows are earlier versions of a party that changed affiliation: never offered as a status.
-  const statuses = d3.rollups(ALL.filter(r => r._status !== "realigned" && r._latest), v => v.length, r => r._status).sort((a, b) => b[1] - a[1]);
-  $("#f-status").innerHTML = `<option value="">All statuses</option>` + statuses.map(([s, n]) => `<option value="${esc(s)}">${esc(s)} (${n})</option>`).join("");
-  if (!statuses.some(s => s[0] === "active")) state.status = "";
-  $("#f-status").value = state.status;
-  const eps = [...new Set(ALL.map(r => r._ep).filter(Boolean))].sort((a, b) => d3.ascending(a, b));
-  // Federations not in the FED list get colours of their own.
-  eps.filter(e => !FED_COLOR[e]).forEach((e, i) => (FED_COLOR[e] = OTHER_FED[i % OTHER_FED.length]));
-  fillSelect($("#f-ep"), eps.map(e => [e, e]), "All international federations");
-  const regs = REGIONS.filter(g => ALL.some(r => r._region === g));
-  fillSelect($("#f-region"), regs.map(g => [g, g]), "All regions");
-  const ideos = [...new Set(ALL.map(r => r[C.ideo]).filter(Boolean))].sort();
-  fillSelect($("#f-ideo"), ideos.map(e => [e, e]), "All ideologies");
-
-  // URL state (shareable links)
-  const p = new URLSearchParams(location.hash.slice(1));
-  for (const k of ["q", "country", "status", "ep", "ideo", "region"]) if (p.has(k)) state[k] = p.get(k);
-  $("#q").value = state.q; $("#f-country").value = state.country; $("#f-status").value = state.status; $("#f-ep").value = state.ep; $("#f-ideo").value = state.ideo; $("#f-region").value = state.region;
-
-  const on = (sel, k, ev = "change") => $(sel).addEventListener(ev, e => { state[k] = e.target.value; apply(); });
-  on("#q", "q", "input"); on("#f-country", "country"); on("#f-status", "status"); on("#f-ep", "ep"); on("#f-ideo", "ideo"); on("#f-region", "region");
-  $("#f-latest").onchange = e => { state.latest = e.target.checked; apply(); };
-  $("#reset").onclick = () => { state = { q: "", country: "", status: statuses.some(s => s[0] === "active") ? "active" : "", ep: "", ideo: "", region: "", lean: false, latest: true };
-    $("#q").value = ""; $("#f-latest").checked = true; ["#f-country", "#f-ep", "#f-ideo", "#f-region"].forEach(s => $(s).value = ""); $("#f-status").value = state.status; apply(); };
-  $("#more").onclick = () => { shown += 200; renderTable(); };
-  $("#drawer-close").onclick = closeDrawer;
-  addEventListener("keydown", e => e.key === "Escape" && closeDrawer());
-  let t; addEventListener("resize", () => { clearTimeout(t); t = setTimeout(renderAll, 150); });
-  apply();
-}
-boot();
-if (window.ResizeObserver) new ResizeObserver(() => postHeight()).observe(document.body);
 })();
