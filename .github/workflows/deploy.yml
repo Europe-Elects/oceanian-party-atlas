@@ -1,0 +1,97 @@
+name: Refresh data & deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "29 4 * * *"   # daily at 04:29 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write          # lets the job prove to Google that it runs in Europe-Elects
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  # Not secret: these only name the Google identity. Access is limited to Europe-Elects Actions.
+  GCP_PROVIDER: projects/659866385408/locations/global/workloadIdentityPools/github/providers/github-actions
+  GCP_SERVICE_ACCOUNT: ee-sheets-reader@project-6c08a079-4a01-46eb-aaf.iam.gserviceaccount.com
+  GID: "0"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: google
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.GCP_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/spreadsheets.readonly
+          create_credentials_file: false
+
+      - name: Download the party database
+        env:
+          GOOGLE_TOKEN: ${{ steps.google.outputs.access_token }}
+          SHEET_ID: ${{ secrets.PARTY_DB_SHEET_ID }}
+        run: |
+          test -n "$SHEET_ID" || { echo "Secret PARTY_DB_SHEET_ID is missing"; exit 1; }
+          mkdir -p _site/data
+          python3 scripts/sheet_csv.py "$SHEET_ID" "$GID" raw.csv
+
+      - name: Keep Oceanian parties and the columns the page uses
+        run: |
+          python3 - <<'PY'
+          import csv, sys
+          # Oceania Elects coverage, including sovereign states and territories.
+          # Add an ISO-2 code here if a new jurisdiction is added to the database.
+          OCEANIA = set("""AU NZ PG FJ SB VU WS TO KI TV NR FM MH PW AS CK PF GU NC MP NF PN TK WF NU
+                           CX CC HM UM""".split())
+          KEEP = ["Status", "ISO-2", "Country", "Name (Native)", "Name (English)", "Europe Elects Entity ID",
+                  "Europe Elects Entity Version", "Entity Version ID", "National Legal ID", "Abbreviation", "Logo",
+                  "Ideological Orientation", "Legally Recognized Minority Party", "Separatist", "Political Activity Started",
+                  "Legal Entity Registration", "Legal Entity Deregistration", "Name Registration", "Name Deregistration",
+                  "International Party Federation", "International Affiliation Start", "International Affiliation End"]
+          with open("raw.csv", newline="", encoding="utf-8") as f:
+              rows = list(csv.reader(f))
+          head = [h.strip() for h in rows[0]]
+          if "Europe Elects Entity ID" not in head:
+              sys.exit("Unexpected sheet layout: header row not found")
+          idx = [head.index(k) for k in KEEP if k in head]
+          iso = head.index("ISO-2")
+          out = [[head[i] for i in idx]]
+          for r in rows[1:]:
+              r = r + [""] * (len(head) - len(r))
+              if r[iso].strip().upper() in OCEANIA and any(c.strip() for c in r):
+                  out.append([r[i] for i in idx])
+          if len(out) < 2:
+              sys.exit("No Oceanian parties found in the sheet (check the ISO-2 codes in OCEANIA)")
+          with open("_site/data/parties.csv", "w", newline="", encoding="utf-8") as f:
+              csv.writer(f).writerows(out)
+          found = sorted({r[[head[i] for i in idx].index("ISO-2")] for r in out[1:]})
+          print(f"{len(out)-1} rows from {len(found)} countries/territories: {' '.join(found)}")
+          PY
+
+      - name: Assemble site
+        run: cp index.html style.css app.js _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
